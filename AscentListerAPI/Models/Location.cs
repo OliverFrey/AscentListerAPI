@@ -6,4 +6,5 @@ public class Location
     public string LocationName  { get; set; }
     public string LocationAreaName  { get; set; }
     public string locationCountry { get; set; }
+    public StatusEnum LocationStatus { get; set; }
 }

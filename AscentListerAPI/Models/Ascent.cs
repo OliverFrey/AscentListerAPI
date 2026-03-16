@@ -8,4 +8,5 @@ public class Ascent
     public string Style { get; set; }
     public int Attempts { get; set; }
     public string Comments { get; set; }
+    public StatusEnum Status { get; set; }
 }

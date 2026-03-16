@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AscentListerAPI.Models;
+using Microsoft.AspNetCore.Mvc;
 using Route = AscentListerAPI.Models.Route;
 
 namespace AscentListerAPI.Controllers;
@@ -7,25 +8,6 @@ namespace AscentListerAPI.Controllers;
 [ApiController]
 public class RouteController : Controller
 {
-    static List<Route> _routes = new List<Route>
-    {
-        new Route()
-        {
-            RouteId = 1, RouteName = "Das ist eine Route", Grade = "6a",
-            LocationId = 1
-        },
-        new Route()
-        {
-            RouteId = 2, RouteName = "Route 2", Grade = "7a",
-            LocationId = 1
-        },
-        new Route()
-        {
-            RouteId = 3, RouteName = "Route 3", Grade = "6a+",
-            LocationId = 1
-        }
-    };
-    
     [HttpGet]
     public async Task<ActionResult<List<Route>>> Get()
         =>await Task.FromResult(Ok(_routes));

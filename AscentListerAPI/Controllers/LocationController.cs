@@ -7,7 +7,7 @@ namespace AscentListerAPI.Controllers;
 [ApiController]
 public class LocationController : Controller
 {
-    [HttpGet]
-    public async Task<ActionResult<List<Ascent>>> Get()
-        =>await Task.FromResult(Ok(_locations));
+//     [HttpGet]
+//     public async Task<ActionResult<List<Ascent>>> Get()
+//         =>await Task.FromResult(Ok(_locations));
 }

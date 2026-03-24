@@ -3,3 +3,5 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+AscentListerAPI/appsettings.json
+AscentListerAPI/appsettings.Development.json

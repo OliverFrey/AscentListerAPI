@@ -8,26 +8,50 @@ namespace AscentListerAPI.Services;
 public class AscentListerService(AppDbContext context) : IAscentListerService
 {
     public async Task<List<Ascent>> GetAllAscentsAsync()
-        => await context.Ascents.ToListAsync();
+        => await context.Ascents.AsNoTracking()
+            .Include(r => r.Route)
+                .ThenInclude(r => r.Location)
+            .ToListAsync();
 
     public async Task<Ascent?> GetAscentByIdAsync(int id)
     {
-        var ascent = await context.Ascents.Where(a => a.AscentId == id).FirstOrDefaultAsync();
+        var ascent = await context.Ascents
+                .AsNoTracking()
+                .Include(a => a.Route)
+                    .ThenInclude(r => r.Location)
+                .Where(a => a.AscentId == id).FirstOrDefaultAsync();
         return ascent;
     }
 
-    public Task<Ascent> AddAscentAsync(Ascent ascent)
+    public async Task<Ascent> AddAscentAsync(Ascent ascent)
     {
-        throw new NotImplementedException();
+        await context.Ascents.AddAsync(ascent);
+        await context.SaveChangesAsync();
+        return ascent;
     }
 
-    public Task<bool> UpdateAscentAsync(int id, Ascent ascent)
+    public async Task<Ascent?> UpdateAscentAsync(int id, Ascent ascent)
     {
-        throw new NotImplementedException();
+        if (id != ascent.AscentId)
+            return null;
+        
+        var existingAscent = await context.Ascents.FindAsync(id);
+        if (existingAscent == null)
+            return null;
+        
+        context.Ascents.Update(ascent);
+        await context.SaveChangesAsync();
+        return ascent;
     }
 
-    public Task<bool> DeleteAscentAsync(int id)
+    public async Task<bool> DeleteAscentAsync(int id)
     {
-        throw new NotImplementedException();
+        var ascent = await context.Ascents.FindAsync(id);
+        if (ascent == null)
+            return false;
+        
+        context.Ascents.Remove(ascent);
+        await context.SaveChangesAsync();
+        return true;
     }
 }

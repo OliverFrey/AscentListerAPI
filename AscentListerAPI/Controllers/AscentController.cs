@@ -1,9 +1,11 @@
 ﻿using AscentListerAPI.Models;
 using AscentListerAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AscentListerAPI.Controllers;
 
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class AscentController(IAscentListerService service) : ControllerBase

@@ -1,6 +1,8 @@
 using AscentListerAPI.Data;
 using AscentListerAPI.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +19,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IAscentListerService, AscentListerService>();
 builder.Services.AddScoped<RouteService>();
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+        {
+            options.Authority = "http://keycloak:8080/realms/AscentLister";
+            options.RequireHttpsMetadata = false; // Only for develop
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = "http://localhost:8080/realms/AscentLister",
+                ValidateAudience = true,
+                ValidAudience = "ascent-lister-api",
+            };
+        }
+    );
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -29,6 +46,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+app.UseAuthentication();
 
 app.MapControllers();
 

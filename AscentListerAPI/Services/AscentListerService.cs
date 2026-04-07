@@ -25,6 +25,9 @@ public class AscentListerService(AppDbContext context) : IAscentListerService
 
     public async Task<Ascent> AddAscentAsync(Ascent ascent)
     {
+        await AddLocationAsync(ascent.Route.Location);
+        await AddRouteAsync(ascent.Route);
+        
         await context.Ascents.AddAsync(ascent);
         await context.SaveChangesAsync();
         return ascent;
@@ -53,5 +56,23 @@ public class AscentListerService(AppDbContext context) : IAscentListerService
         context.Ascents.Remove(ascent);
         await context.SaveChangesAsync();
         return true;
+    }
+
+    private async Task AddLocationAsync(Location location)
+    {
+        var existingLocation = await context.Locations.FindAsync(location.LocationId);
+        if (existingLocation == null)
+        {
+            context.Locations.Add(location);
+        }
+    }
+
+    private async Task AddRouteAsync(Route route)
+    {
+        var existingRoute = await context.Routes.FindAsync(route.RouteId);
+        if (existingRoute == null)
+        {
+            context.Routes.Add(route);
+        }
     }
 }

@@ -1,3 +1,4 @@
+using AscentListerAPI;
 using AscentListerAPI.Data;
 using AscentListerAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -7,11 +8,9 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+
+builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -22,14 +21,16 @@ builder.Services.AddScoped<RouteService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
         {
-            options.Authority = "http://keycloak:8080/realms/AscentLister";
-            options.RequireHttpsMetadata = false; // Only for develop
+            var jwtSettings = builder.Configuration.GetSection("Jwt");
+            
+            options.Authority = jwtSettings["Authority"];
+            options.RequireHttpsMetadata = jwtSettings.GetValue<bool>("RequireHttpsMetadata");
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
-                ValidIssuer = "http://localhost:8080/realms/AscentLister",
+                ValidIssuer = jwtSettings["ValidIssuer"],
                 ValidateAudience = true,
-                ValidAudience = "ascent-lister-api",
+                ValidAudience = jwtSettings["ValidAudience"],
             };
         }
     );
@@ -40,13 +41,25 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapScalarApiReference(options =>
+    {
+        options
+            .WithTitle("Ascent Lister API")
+            .WithTheme(ScalarTheme.Moon)
+            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+
+        options
+            .AddPreferredSecuritySchemes("Bearer")
+            .AddHttpAuthentication("Bearer", auth => { auth.Token = ""; })
+            .EnablePersistentAuthentication();
+    });
+
 }
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

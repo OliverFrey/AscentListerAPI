@@ -1,0 +1,18 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=;Database=;Trusted_Connection=True;TrustServerCertificate=True;"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "Jwt": {
+    "Authority": "http://<Keycloak URL>/realms/<Realm>",
+    "RequireHttpsMetadata": false,
+    "ValidIssuer": "http://<Keycloak URL>/realms/<Realm>",
+    "ValidAudience": "<your-api-client-id>"
+  },
+  "AllowedHosts": "*"
+}

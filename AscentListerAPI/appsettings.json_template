@@ -1,6 +1,6 @@
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=;Database=;Trusted_Connection=True;TrustServerCertificate=True;"
+      "DefaultConnection": "Host=<postgres-host>;Port=5432;Database=<database-name>;Username=<postgres-user>;Password=<postgres-password>"
   },
   "Logging": {
     "LogLevel": {

@@ -28,6 +28,13 @@ public class AscentController(IAscentListerService service) : ControllerBase
         return Ok(ascent);
     }
     
+    [HttpPost("batch")]
+    public async Task<ActionResult<List<Ascent>>> AddAscents(List<Ascent> ascents)
+    {
+        var newAscents = await service.AddAscentsAsync(ascents);
+        return CreatedAtAction(nameof(GetAscents), newAscents);
+    }
+    
     [HttpPost]
     public async Task<ActionResult<Ascent>> AddAscent(Ascent ascent)
     {

@@ -32,6 +32,20 @@ public class AscentListerService(AppDbContext context) : IAscentListerService
         await context.SaveChangesAsync();
         return ascent;
     }
+    
+    public async Task<List<Ascent>> AddAscentsAsync(List<Ascent> ascents)
+    {
+        foreach (var ascent in ascents)
+        {
+            await AddLocationAsync(ascent.Route.Location);
+            await AddRouteAsync(ascent.Route);
+        }
+
+        await context.Ascents.AddRangeAsync(ascents);
+        await context.SaveChangesAsync();
+
+        return ascents;
+    }
 
     public async Task<Ascent?> UpdateAscentAsync(int id, Ascent ascent)
     {

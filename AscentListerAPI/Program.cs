@@ -55,6 +55,7 @@ if (app.Environment.IsDevelopment())
     });
 
 }
+app.MapGet("/", () => "API is running");
 
 app.UseHttpsRedirection();
 

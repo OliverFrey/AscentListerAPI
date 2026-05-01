@@ -8,7 +8,7 @@
 
     <PropertyGroup>
         <ContainerRepository>ghcr.io/OliverFrey/AscentLister</ContainerRepository>
-        <ContainerImageTags>0.1.0;latest</ContainerImageTags>
+        <ContainerImageTags>0.3.0;latest</ContainerImageTags>
     </PropertyGroup>
 
     <ItemGroup>

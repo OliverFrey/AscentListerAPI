@@ -35,15 +35,24 @@ public class AscentListerService(AppDbContext context) : IAscentListerService
     
     public async Task<List<Ascent>> AddAscentsAsync(List<Ascent> ascents)
     {
-        foreach (var ascent in ascents)
+        try
         {
-            await AddLocationAsync(ascent.Route.Location);
-            await AddRouteAsync(ascent.Route);
+            foreach (var ascent in ascents)
+            {
+                var location = await AddLocationAsync(ascent.Route.Location);
+                ascent.Route.Location = location;
+                var route = await AddRouteAsync(ascent.Route);
+                ascent.Route = route;
+            }
+
+            await context.Ascents.AddRangeAsync(ascents);
+            await context.SaveChangesAsync();
         }
-
-        await context.Ascents.AddRangeAsync(ascents);
-        await context.SaveChangesAsync();
-
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
         return ascents;
     }
 
@@ -72,21 +81,19 @@ public class AscentListerService(AppDbContext context) : IAscentListerService
         return true;
     }
 
-    private async Task AddLocationAsync(Location location)
+    private async Task<Location> AddLocationAsync(Location location)
     {
         var existingLocation = await context.Locations.FindAsync(location.LocationId);
-        if (existingLocation == null)
-        {
-            context.Locations.Add(location);
-        }
+        if (existingLocation != null) return existingLocation;
+        context.Locations.Add(location);
+        return location;
     }
 
-    private async Task AddRouteAsync(Route route)
+    private async Task<Route> AddRouteAsync(Route route)
     {
         var existingRoute = await context.Routes.FindAsync(route.RouteId);
-        if (existingRoute == null)
-        {
-            context.Routes.Add(route);
-        }
+        if (existingRoute != null) return existingRoute;
+        context.Routes.Add(route);
+        return route;
     }
 }

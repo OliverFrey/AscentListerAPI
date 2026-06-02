@@ -1,4 +1,3 @@
-using AscentListerAPI.Data;
 using AscentListerAPI.Data.Repositories;
 using AscentListerAPI.Models;
 using Microsoft.Extensions.Logging;
@@ -9,7 +8,6 @@ public class AscentListerService(
     ILocationRepository locations,
     IRouteRepository routes,
     IAscentRepository ascents,
-    IUnitOfWork unitOfWork,
     ILogger<AscentListerService> logger) : IAscentListerService
 {
     public Task<List<Ascent>> GetAllAscentsAsync() => ascents.GetAllWithGraphAsync();
@@ -42,7 +40,7 @@ public class AscentListerService(
             }
 
             await ascents.AddRangeAsync(incoming);
-            await unitOfWork.SaveChangesAsync();
+            await ascents.SaveChangesAsync();
         }
         catch (Exception e)
         {

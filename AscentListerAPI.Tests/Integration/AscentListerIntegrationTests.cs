@@ -21,7 +21,6 @@ public class AscentListerIntegrationTests
             new LocationRepository(context),
             new RouteRepository(context),
             new AscentRepository(context),
-            new UnitOfWork(context),
             NullLogger<AscentListerService>.Instance);
 
         return (service, context);

@@ -1,4 +1,3 @@
-using AscentListerAPI.Data;
 using AscentListerAPI.Data.Repositories;
 using AscentListerAPI.Models;
 using AscentListerAPI.Services;
@@ -16,11 +15,10 @@ public class AscentListerServiceTests
     private readonly ILocationRepository _locations = Substitute.For<ILocationRepository>();
     private readonly IRouteRepository _routes = Substitute.For<IRouteRepository>();
     private readonly IAscentRepository _ascents = Substitute.For<IAscentRepository>();
-    private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly ILogger<AscentListerService> _logger = Substitute.For<ILogger<AscentListerService>>();
 
     private AscentListerService Subject() =>
-        new(_locations, _routes, _ascents, _uow, _logger);
+        new(_locations, _routes, _ascents, _logger);
 
     [Fact]
     public async Task AddAscentsAsync_AllNewGraph_AddsLocationRouteAndAscent()
@@ -35,7 +33,7 @@ public class AscentListerServiceTests
         await _locations.Received(2).AddAsync(Arg.Any<Location>());
         await _routes.Received(2).AddAsync(Arg.Any<Route>());
         await _ascents.Received(1).AddRangeAsync(payload);
-        await _uow.Received(1).SaveChangesAsync();
+        await _ascents.Received(1).SaveChangesAsync();
     }
 
     [Fact]
@@ -76,15 +74,15 @@ public class AscentListerServiceTests
         await _locations.DidNotReceive().GetByIdAsync(Arg.Any<int>());
         await _routes.DidNotReceive().GetByIdAsync(Arg.Any<int>());
         await _ascents.Received(1).AddRangeAsync(Arg.Is<IEnumerable<Ascent>>(e => !e.Any()));
-        await _uow.Received(1).SaveChangesAsync();
+        await _ascents.Received(1).SaveChangesAsync();
     }
 
     [Fact]
-    public async Task AddAscentsAsync_UnitOfWorkThrows_LogsAndRethrows()
+    public async Task AddAscentsAsync_SaveThrows_LogsAndRethrows()
     {
         _locations.GetByIdAsync(Arg.Any<int>()).Returns((Location?)null);
         _routes.GetByIdAsync(Arg.Any<int>()).Returns((Route?)null);
-        _uow.SaveChangesAsync().Throws(new InvalidOperationException("boom"));
+        _ascents.SaveChangesAsync().Throws(new InvalidOperationException("boom"));
 
         var payload = AscentFixtures.TwoAscentsSharingNoLocations();
 

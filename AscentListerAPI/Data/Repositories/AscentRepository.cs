@@ -13,4 +13,6 @@ public class AscentRepository(AppDbContext context) : IAscentRepository
 
     public async Task AddRangeAsync(IEnumerable<Ascent> ascents) =>
         await context.Ascents.AddRangeAsync(ascents);
+
+    public Task<int> SaveChangesAsync() => context.SaveChangesAsync();
 }

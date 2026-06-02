@@ -53,7 +53,6 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.AscentId);
 
             entity.Property(e => e.Style).IsRequired();
-            entity.Property(e => e.Comments).IsRequired();
             entity.Property(e => e.Status).IsRequired();
             entity.Property(e => e.Date).IsRequired();
             entity.Property(e => e.Attempts).IsRequired();

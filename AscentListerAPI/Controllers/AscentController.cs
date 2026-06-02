@@ -21,6 +21,6 @@ public class AscentController(IAscentListerService service) : ControllerBase
     public async Task<ActionResult<List<Ascent>>> AddAscents(List<Ascent> ascents)
     {
         var newAscents = await service.AddAscentsAsync(ascents);
-        return CreatedAtAction(nameof(GetAscents), newAscents);
+        return Ok(newAscents);
     }
 }

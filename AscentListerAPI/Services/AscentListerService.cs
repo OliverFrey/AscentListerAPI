@@ -1,54 +1,55 @@
-﻿using AscentListerAPI.Data;
+using AscentListerAPI.Data;
+using AscentListerAPI.Data.Repositories;
 using AscentListerAPI.Models;
-using Microsoft.EntityFrameworkCore;
-using Route = AscentListerAPI.Models.Route;
+using Microsoft.Extensions.Logging;
 
 namespace AscentListerAPI.Services;
 
-public class AscentListerService(AppDbContext context) : IAscentListerService
+public class AscentListerService(
+    ILocationRepository locations,
+    IRouteRepository routes,
+    IAscentRepository ascents,
+    IUnitOfWork unitOfWork,
+    ILogger<AscentListerService> logger) : IAscentListerService
 {
-    public async Task<List<Ascent>> GetAllAscentsAsync()
-        => await context.Ascents.AsNoTracking()
-            .Include(r => r.Route)
-                .ThenInclude(r => r.Location)
-            .ToListAsync();
-    
-    public async Task<List<Ascent>> AddAscentsAsync(List<Ascent> ascents)
+    public Task<List<Ascent>> GetAllAscentsAsync() => ascents.GetAllWithGraphAsync();
+
+    public async Task<List<Ascent>> AddAscentsAsync(List<Ascent> incoming)
     {
         try
         {
-            foreach (var ascent in ascents)
+            foreach (var ascent in incoming)
             {
-                var location = await AddLocationAsync(ascent.Route.Location);
-                ascent.Route.Location = location;
-                var route = await AddRouteAsync(ascent.Route);
-                ascent.Route = route;
+                var location = await locations.GetByIdAsync(ascent.Route.Location.LocationId);
+                if (location is null)
+                {
+                    await locations.AddAsync(ascent.Route.Location);
+                }
+                else
+                {
+                    ascent.Route.Location = location;
+                }
+
+                var route = await routes.GetByIdAsync(ascent.Route.RouteId);
+                if (route is null)
+                {
+                    await routes.AddAsync(ascent.Route);
+                }
+                else
+                {
+                    ascent.Route = route;
+                }
             }
 
-            await context.Ascents.AddRangeAsync(ascents);
-            await context.SaveChangesAsync();
+            await ascents.AddRangeAsync(incoming);
+            await unitOfWork.SaveChangesAsync();
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Failed to add ascents batch of size {Count}", incoming.Count);
             throw;
         }
-        return ascents;
-    }
 
-    private async Task<Location> AddLocationAsync(Location location)
-    {
-        var existingLocation = await context.Locations.FindAsync(location.LocationId);
-        if (existingLocation != null) return existingLocation;
-        context.Locations.Add(location);
-        return location;
-    }
-
-    private async Task<Route> AddRouteAsync(Route route)
-    {
-        var existingRoute = await context.Routes.FindAsync(route.RouteId);
-        if (existingRoute != null) return existingRoute;
-        context.Routes.Add(route);
-        return route;
+        return incoming;
     }
 }

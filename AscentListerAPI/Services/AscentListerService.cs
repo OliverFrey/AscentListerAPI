@@ -12,26 +12,6 @@ public class AscentListerService(AppDbContext context) : IAscentListerService
             .Include(r => r.Route)
                 .ThenInclude(r => r.Location)
             .ToListAsync();
-
-    public async Task<Ascent?> GetAscentByIdAsync(int id)
-    {
-        var ascent = await context.Ascents
-                .AsNoTracking()
-                .Include(a => a.Route)
-                    .ThenInclude(r => r.Location)
-                .Where(a => a.AscentId == id).FirstOrDefaultAsync();
-        return ascent;
-    }
-
-    public async Task<Ascent> AddAscentAsync(Ascent ascent)
-    {
-        await AddLocationAsync(ascent.Route.Location);
-        await AddRouteAsync(ascent.Route);
-        
-        await context.Ascents.AddAsync(ascent);
-        await context.SaveChangesAsync();
-        return ascent;
-    }
     
     public async Task<List<Ascent>> AddAscentsAsync(List<Ascent> ascents)
     {
@@ -54,31 +34,6 @@ public class AscentListerService(AppDbContext context) : IAscentListerService
             throw;
         }
         return ascents;
-    }
-
-    public async Task<Ascent?> UpdateAscentAsync(int id, Ascent ascent)
-    {
-        if (id != ascent.AscentId)
-            return null;
-        
-        var existingAscent = await context.Ascents.FindAsync(id);
-        if (existingAscent == null)
-            return null;
-        
-        context.Ascents.Update(ascent);
-        await context.SaveChangesAsync();
-        return ascent;
-    }
-
-    public async Task<bool> DeleteAscentAsync(int id)
-    {
-        var ascent = await context.Ascents.FindAsync(id);
-        if (ascent == null)
-            return false;
-        
-        context.Ascents.Remove(ascent);
-        await context.SaveChangesAsync();
-        return true;
     }
 
     private async Task<Location> AddLocationAsync(Location location)

@@ -1,6 +1,42 @@
 @AscentListerAPI_HostAddress = http://localhost:5164
 
-GET {{AscentListerAPI_HostAddress}}/weatherforecast/
+# Paste a valid JWT Bearer token (from your Keycloak instance) here.
+@token = REPLACE_WITH_JWT
+
+### Get all ascents
+GET {{AscentListerAPI_HostAddress}}/api/ascent
 Accept: application/json
+Authorization: Bearer {{token}}
+
+### Record a batch of ascents
+# Existing locations/routes are reused by id; missing ones are created.
+POST {{AscentListerAPI_HostAddress}}/api/ascent/batch
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+[
+  {
+    "ascentId": 0,
+    "date": "2026-06-04",
+    "style": "Redpoint",
+    "attempts": 3,
+    "comments": "Crux felt easier the second day.",
+    "status": "NEW",
+    "route": {
+      "routeId": 0,
+      "routeName": "Biographie",
+      "grade": "9a+",
+      "gradeTwo": null,
+      "routeStatus": "NEW",
+      "location": {
+        "locationId": 0,
+        "locationName": "Céüse",
+        "locationAreaName": "Hautes-Alpes",
+        "locationCountry": "France",
+        "locationStatus": "NEW"
+      }
+    }
+  }
+]
 
 ###

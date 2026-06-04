@@ -1,13 +1,84 @@
-### Overview
+# AscentListerAPI
 
-This repository is part of the AscentLister Project and contains the mobile app. The goal for this project was to create an mobile app where I and you can log the climbing route ascents. The project is designed and set up as a local system, where everyone runs a database, api and app on its own. Therefor, there is no user integration, clientid and secret are used for connection and authentication.
+The backend API for **AscentLister**, a personal climbing-route logbook. It lets you
+record the climbing routes you've sent ("ascents") together with where you climbed
+them and how.
 
-The project contains the following repos:
-- https://github.com/OliverFrey/AscentLister
-- https://github.com/OliverFrey/AscentListerAPI
+AscentLister is designed as a **self-hosted, single-user system**: everyone runs their
+own database, API, and mobile app. There is no central server and no user management —
+the API is protected by a JWT issued by an authentication provider you run yourself
+(e.g. Keycloak), using a client id and secret rather than per-user accounts.
 
-### How to use it
-1. Create a Keycloak instance or a simular authentication service. Be aware that the authentication workflow may differ with other authentication services.
-2. Create a PostgreSQL database and import the database schema.
-3. Configure the app to use the Keycloak instance and the PostgreSQL database. For this rename the appsettings.json_template to appsettings.json and configure the settings.
-4. Run the app.
+This repository is the API. The project spans these repos:
+
+- App: https://github.com/OliverFrey/AscentLister
+- API: https://github.com/OliverFrey/AscentListerAPI
+
+## Tech stack
+
+| Area | Choice |
+|------|--------|
+| Runtime | .NET 10 / ASP.NET Core (controllers) |
+| Persistence | PostgreSQL via Entity Framework Core 10 (Npgsql) |
+| Auth | JWT Bearer tokens (OpenID Connect, e.g. Keycloak) |
+| API docs | OpenAPI + [Scalar](https://github.com/scalar/scalar) interactive UI |
+| Tests | xUnit, NSubstitute, EF Core In-Memory, `WebApplicationFactory` |
+
+## Quick start
+
+Prerequisites: the [.NET 10 SDK](https://dotnet.microsoft.com/download), a PostgreSQL
+database, and an OpenID Connect provider (e.g. Keycloak).
+
+```bash
+# 1. Clone
+git clone https://github.com/OliverFrey/AscentListerAPI.git
+cd AscentListerAPI/AscentListerAPI
+
+# 2. Configure: copy the template and fill in your DB + JWT settings
+cp appsettings.json_template appsettings.json
+#   (see docs/configuration.md for what each setting means)
+
+# 3. Create the database schema from the EF Core migrations
+dotnet ef database update
+
+# 4. Run
+dotnet run
+```
+
+In the `Development` environment the interactive Scalar API docs are served at
+`/scalar/v1` (e.g. http://localhost:5164/scalar/v1). A plain `GET /` returns
+`"API is running"` as a health check.
+
+> **Note:** `dotnet ef` requires the EF Core CLI tools. Install once with
+> `dotnet tool install --global dotnet-ef`.
+
+## Project layout
+
+| Path | Contents |
+|------|----------|
+| `Controllers/` | HTTP endpoints (`AscentController`) |
+| `Services/` | Application logic (`AscentListerService`) |
+| `Data/` | `AppDbContext` and the repositories |
+| `Models/` | Domain entities: `Location`, `Route`, `Ascent`, `StatusEnum` |
+| `Migrations/` | EF Core schema migrations |
+| `Program.cs` | Startup, DI, auth, and OpenAPI/Scalar wiring |
+| `../AscentListerAPI.Tests/` | Unit and integration tests |
+
+## Documentation
+
+- [Architecture](docs/architecture.md) — how a request flows through the layers
+- [Data model](docs/data-model.md) — entities, relationships, and migrations
+- [Configuration](docs/configuration.md) — connection string, JWT/Keycloak settings
+- [Development](docs/development.md) — building, testing, and adding endpoints
+- [API reference](docs/api.md) — endpoints and example requests
+
+## API at a glance
+
+All endpoints live under `/api/ascent` and require a Bearer token.
+
+| Method | Route | Purpose |
+|--------|-------|---------|
+| `GET` | `/api/ascent` | List all ascents (with route + location) |
+| `POST` | `/api/ascent/batch` | Record a batch of ascents |
+
+See [docs/api.md](docs/api.md) for details and examples.

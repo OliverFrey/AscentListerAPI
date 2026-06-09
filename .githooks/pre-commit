@@ -1,0 +1,58 @@
+#!/bin/sh
+# Pre-commit hook: scan staged changes for secrets, then build + test.
+# Bypass in an emergency with:  git commit --no-verify
+set -eu
+
+RED=''; GREEN=''; YELLOW=''; NC=''
+if [ -t 1 ]; then RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'; fi
+
+fail() { printf "%b\n" "${RED}pre-commit: $1${NC}" >&2; exit 1; }
+info() { printf "%b\n" "${YELLOW}pre-commit: $1${NC}"; }
+
+# Always operate from the repo root (build/test paths are relative to it).
+cd "$(git rev-parse --show-toplevel)" || fail "could not cd to repo root."
+
+# ---------------------------------------------------------------------------
+# 1. Secret scan -- inspect only ADDED lines in staged (ACM) text changes.
+# ---------------------------------------------------------------------------
+info "scanning staged changes for secrets..."
+
+# Patterns: tune/extend as needed. Combined into one egrep alternation.
+PATTERNS='-----BEGIN (RSA|EC|OPENSSH|DSA|PGP)? ?PRIVATE KEY-----'
+PATTERNS="$PATTERNS|AKIA[0-9A-Z]{16}"                       # AWS access key id
+PATTERNS="$PATTERNS|(secret|password|passwd|pwd|api[_-]?key|token|client[_-]?secret)[\"' ]*[:=][\"' ]*[^\"' ]{8,}"
+PATTERNS="$PATTERNS|(Password|Pwd)=[^;\"' ]+"               # SQL/Npgsql conn string
+PATTERNS="$PATTERNS|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"  # JWT
+PATTERNS="$PATTERNS|gh[pousr]_[A-Za-z0-9]{30,}"            # GitHub token
+
+# Collect staged added lines (only '+' lines, excluding the '+++' file headers).
+added=$(git diff --cached --no-color -U0 --diff-filter=ACM \
+        | grep -E '^\+' | grep -vE '^\+\+\+' || true)
+
+# Allow an explicit opt-out on a line:  # pragma: allowlist secret
+hits=$(printf '%s\n' "$added" \
+        | grep -viE 'pragma: ?allowlist secret' \
+        | grep -inE -- "$PATTERNS" || true)
+
+if [ -n "$hits" ]; then
+  printf "%b\n" "${RED}pre-commit: possible secret(s) in staged changes:${NC}" >&2
+  printf '%s\n' "$hits" >&2
+  printf "%b\n" "${YELLOW}If this is a false positive, append '# pragma: allowlist secret' to the line, or re-run with --no-verify.${NC}" >&2
+  exit 1
+fi
+
+# Guard: never allow the gitignored secret files in even via 'git add -f'.
+if git diff --cached --name-only | grep -E '(^|/)appsettings(\.Development)?\.json$' >/dev/null; then
+  fail "appsettings.json / appsettings.Development.json must not be committed."
+fi
+
+# ---------------------------------------------------------------------------
+# 2. Build + test.
+# ---------------------------------------------------------------------------
+info "building..."
+dotnet build AscentListerAPI.sln --nologo -v quiet || fail "build failed."
+
+info "running tests..."
+dotnet test AscentListerAPI.sln --no-build --nologo -v quiet || fail "tests failed."
+
+printf "%b\n" "${GREEN}pre-commit: all checks passed.${NC}"
